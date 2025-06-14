@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KI-Team Einzelchat</title>
+  <style>
+    body {
+      margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f4f8;
+      display: flex; justify-content: center; align-items: center; height: 100vh;
+    }
+    .container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      width: 400px; height: 600px;
+      display: flex; flex-direction: column;
+    }
+    header {
+      background: #00796b;
+      color: white;
+      padding: 15px;
+      font-size: 1.3em;
+      text-align: center;
+      border-radius: 10px 10px 0 0;
+    }
+    select {
+      margin: 10px auto;
+      display: block;
+      font-size: 1em;
+      padding: 6px 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      width: 60%;
+      cursor: pointer;
+    }
+    .messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background: #e0f2f1;
+      border-radius: 0 0 10px 10px;
+    }
+    .message {
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      max-width: 80%;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+    .message.user {
+      background: #004d40;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+    }
+    .message.ai {
+      background: #80cbc4;
+      color: #004d40;
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+    }
+    .input-area {
+      display: flex;
+      border-top: 1px solid #ccc;
+      padding: 10px;
+      background: white;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      outline: none;
+    }
+    button {
+      background: #00796b;
+      border: none;
+      color: white;
+      padding: 0 16px;
+      margin-left: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    button:hover {
+      background: #004d40;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>KI-Team Einzelchat</header>
+  <select id="aiSelector" aria-label="KI auswählen">
+    <option value="lina">Lina – Marketing</option>
+    <option value="max">Max – CIO</option>
+    <option value="maya">Maya – Design</option>
+  </select>
+
+  <div class="messages" id="messages"></div>
+
+  <div class="input-area">
+    <input id="input" type="text" placeholder="Nachricht eingeben..." autocomplete="off" />
+    <button onclick="sendMessage()">Senden</button>
+  </div>
+</div>
+
+<script>
+  const API_KEY = "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.";
+
+  const roles = {
+    lina: "Du bist Lina, die Social-Media-Marketing-Chefin. Du redest locker, trendy und kreativ. Du liebst Hashtags, Reels und gute Vibes.",
+    max: "Du bist Max, der CIO. Du bist strategisch, klar, strukturiert und denkst langfristig. Du magst keine halben Sachen.",
+    maya: "Du bist Maya, die Branding- und Design-KI. Du sprichst gefühlvoll, visuell und stilvoll. Ästhetik ist dein Herz."
+  };
+
+  async function sendMessage() {
+    const input = document.getElementById("input");
+    const userText = input.value.trim();
+    if (!userText) return;
+
+    showMessage("user", userText);
+    input.value = "";
+
+    const selectedAI = document.getElementById("aiSelector").value;
+    const systemMessage = roles[selectedAI];
+
+    const messages = [
+      { role: "system", content: systemMessage },
+      { role: "user", content: userText }
+    ];
+
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: messages
+        })
+      });
+
+      const data = await response.json();
+
+      console.log(data); // Antwort in Konsole anzeigen
+      alert("✅ Antwort von OpenAI erhalten!");
+
+      const aiText = data.choices?.[0]?.message?.content?.trim() || "⚠️ Keine Antwort erhalten.";
+      showMessage("ai", aiText);
+
+    } catch (error) {
+      console.error("Fehler beim Abrufen der Antwort:", error);
+      alert("❌ Fehler bei der Verbindung zur OpenAI API");
+    }
+  }
+
+  function showMessage(role, text) {
+    const messagesDiv = document.getElementById("messages");
+    const message = document.createElement("div");
+    message.className = "message " + role;
+    message.textContent = (role === 'user' ? "Du: " : "KI: ") + text;
+    messagesDiv.appendChild(message);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+</script>
+
+</body>
+</html>
